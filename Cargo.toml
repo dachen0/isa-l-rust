@@ -1,0 +1,12 @@
+[package]
+name = "isa-l-rust"
+version = "0.1.0"
+edition = "2021"
+description = "Rust FFI bindings for Intel ISA-L (Intelligent Storage Acceleration Library)"
+license = "BSD-3-Clause"
+links = "isal"
+
+[dependencies]
+
+[build-dependencies]
+cmake = "0.1"

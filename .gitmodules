@@ -1,0 +1,6 @@
+[submodule "isa-l_crypto"]
+	path = isa-l_crypto
+	url = https://github.com/intel/isa-l_crypto
+[submodule "isa-l"]
+	path = isa-l
+	url = https://github.com/intel/isa-l
