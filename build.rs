@@ -9,10 +9,7 @@ fn main() {
     let dst = cfg.build();
 
     // Link the static library
-    println!(
-        "cargo:rustc-link-search=native={}/lib",
-        dst.display()
-    );
+    println!("cargo:rustc-link-search=native={}/lib", dst.display());
     println!("cargo:rustc-link-lib=static=isal");
 
     // Re-run if isa-l source changes

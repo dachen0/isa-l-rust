@@ -225,6 +225,7 @@ extern "C" {
     /// Initialize tables for fast erasure code encode/decode.
     pub fn ec_init_tables(k: c_int, rows: c_int, a: *mut c_uchar, gftbls: *mut c_uchar);
     pub fn ec_init_tables_base(k: c_int, rows: c_int, a: *mut c_uchar, gftbls: *mut c_uchar);
+    pub fn ec_init_tables_gfni(k: c_int, rows: c_int, a: *mut c_uchar, gftbls: *mut c_uchar);
 
     /// Generate or decode erasure codes on blocks of data (multi-binary).
     pub fn ec_encode_data(
@@ -250,7 +251,7 @@ extern "C" {
         k: c_int,
         rows: c_int,
         vec_i: c_int,
-        g_tbls: *mut c_uchar,
+        gftbls: *mut c_uchar,
         data: *mut c_uchar,
         coding: *mut *mut c_uchar,
     );
@@ -319,8 +320,12 @@ extern "C" {
     // ======================================================================
 
     /// GF(2^8) vector multiply by constant (multi-binary).
-    pub fn gf_vect_mul(len: c_int, gftbl: *mut c_uchar, src: *mut c_void, dest: *mut c_void)
-        -> c_int;
+    pub fn gf_vect_mul(
+        len: c_int,
+        gftbl: *mut c_uchar,
+        src: *mut c_void,
+        dest: *mut c_void,
+    ) -> c_int;
 
     /// Initialize 32-byte table for GF(2^8) vector multiply.
     pub fn gf_vect_mul_init(c: c_uchar, gftbl: *mut c_uchar);
@@ -360,11 +365,7 @@ extern "C" {
     ) -> c_int;
 
     /// Set compression dictionary.
-    pub fn isal_deflate_set_dict(
-        stream: *mut isal_zstream,
-        dict: *mut u8,
-        dict_len: u32,
-    ) -> c_int;
+    pub fn isal_deflate_set_dict(stream: *mut isal_zstream, dict: *mut u8, dict_len: u32) -> c_int;
 
     /// Process dictionary for reuse.
     pub fn isal_deflate_process_dict(
@@ -375,10 +376,7 @@ extern "C" {
     ) -> c_int;
 
     /// Reset compression dictionary from pre-processed data.
-    pub fn isal_deflate_reset_dict(
-        stream: *mut isal_zstream,
-        dict_str: *mut isal_dict,
-    ) -> c_int;
+    pub fn isal_deflate_reset_dict(stream: *mut isal_zstream, dict_str: *mut isal_dict) -> c_int;
 
     /// Update histogram of deflate symbols.
     pub fn isal_update_histogram(
@@ -406,16 +404,10 @@ extern "C" {
     pub fn isal_zlib_header_init(z_hdr: *mut isal_zlib_header);
 
     /// Write gzip header to output stream.
-    pub fn isal_write_gzip_header(
-        stream: *mut isal_zstream,
-        gz_hdr: *mut isal_gzip_header,
-    ) -> u32;
+    pub fn isal_write_gzip_header(stream: *mut isal_zstream, gz_hdr: *mut isal_gzip_header) -> u32;
 
     /// Write zlib header to output stream.
-    pub fn isal_write_zlib_header(
-        stream: *mut isal_zstream,
-        z_hdr: *mut isal_zlib_header,
-    ) -> u32;
+    pub fn isal_write_zlib_header(stream: *mut isal_zstream, z_hdr: *mut isal_zlib_header) -> u32;
 
     // ======================================================================
     // igzip_lib.h — Decompression
@@ -434,17 +426,11 @@ extern "C" {
     pub fn isal_inflate_stateless(state: *mut inflate_state) -> c_int;
 
     /// Set decompression dictionary.
-    pub fn isal_inflate_set_dict(
-        state: *mut inflate_state,
-        dict: *mut u8,
-        dict_len: u32,
-    ) -> c_int;
+    pub fn isal_inflate_set_dict(state: *mut inflate_state, dict: *mut u8, dict_len: u32) -> c_int;
 
     /// Read gzip header from input stream.
-    pub fn isal_read_gzip_header(
-        state: *mut inflate_state,
-        gz_hdr: *mut isal_gzip_header,
-    ) -> c_int;
+    pub fn isal_read_gzip_header(state: *mut inflate_state, gz_hdr: *mut isal_gzip_header)
+        -> c_int;
 
     /// Read zlib header from input stream.
     pub fn isal_read_zlib_header(
@@ -511,198 +497,726 @@ extern "C" {
 
     // --- ec_encode_data arch variants ---
     pub fn ec_encode_data_sse(
-        len: c_int, k: c_int, rows: c_int, gftbls: *mut c_uchar,
-        data: *mut *mut c_uchar, coding: *mut *mut c_uchar,
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
     );
     pub fn ec_encode_data_avx(
-        len: c_int, k: c_int, rows: c_int, gftbls: *mut c_uchar,
-        data: *mut *mut c_uchar, coding: *mut *mut c_uchar,
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
     );
     pub fn ec_encode_data_avx2(
-        len: c_int, k: c_int, rows: c_int, gftbls: *mut c_uchar,
-        data: *mut *mut c_uchar, coding: *mut *mut c_uchar,
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
+    );
+
+    // --- ec_encode_data_gfni arch variants ---
+    pub fn ec_encode_data_avx2_gfni(
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
+    );
+    pub fn ec_encode_data_avx512_gfni(
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
     );
 
     // --- ec_encode_data_update arch variants ---
     pub fn ec_encode_data_update_sse(
-        len: c_int, k: c_int, rows: c_int, vec_i: c_int, g_tbls: *mut c_uchar,
-        data: *mut c_uchar, coding: *mut *mut c_uchar,
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut c_uchar,
+        coding: *mut *mut c_uchar,
     );
     pub fn ec_encode_data_update_avx(
-        len: c_int, k: c_int, rows: c_int, vec_i: c_int, g_tbls: *mut c_uchar,
-        data: *mut c_uchar, coding: *mut *mut c_uchar,
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut c_uchar,
+        coding: *mut *mut c_uchar,
     );
     pub fn ec_encode_data_update_avx2(
-        len: c_int, k: c_int, rows: c_int, vec_i: c_int, g_tbls: *mut c_uchar,
-        data: *mut c_uchar, coding: *mut *mut c_uchar,
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut c_uchar,
+        coding: *mut *mut c_uchar,
+    );
+
+    // --- ec_encode_data_update_gfni arch variants ---
+    pub fn ec_encode_data_update_avx2_gfni(
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
+    );
+    pub fn ec_encode_data_update_avx512_gfni(
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
     );
 
     // --- gf_vect_dot_prod arch variants ---
     pub fn gf_vect_dot_prod_sse(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut c_uchar,
     );
     pub fn gf_vect_dot_prod_avx(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut c_uchar,
     );
     pub fn gf_vect_dot_prod_avx2(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut c_uchar,
     );
 
     // --- gf_2vect_dot_prod arch variants ---
     pub fn gf_2vect_dot_prod_sse(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_2vect_dot_prod_avx(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_2vect_dot_prod_avx2(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_3vect_dot_prod arch variants ---
     pub fn gf_3vect_dot_prod_sse(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_3vect_dot_prod_avx(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_3vect_dot_prod_avx2(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_4vect_dot_prod arch variants ---
     pub fn gf_4vect_dot_prod_sse(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_4vect_dot_prod_avx(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_4vect_dot_prod_avx2(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_5vect_dot_prod arch variants ---
     pub fn gf_5vect_dot_prod_sse(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_5vect_dot_prod_avx(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_5vect_dot_prod_avx2(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_6vect_dot_prod arch variants ---
     pub fn gf_6vect_dot_prod_sse(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_6vect_dot_prod_avx(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_6vect_dot_prod_avx2(
-        len: c_int, vlen: c_int, gftbls: *mut c_uchar,
-        src: *mut *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_vect_mad arch variants ---
     pub fn gf_vect_mad_sse(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut c_uchar,
     );
     pub fn gf_vect_mad_avx(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut c_uchar,
     );
     pub fn gf_vect_mad_avx2(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut c_uchar,
     );
 
     // --- gf_2vect_mad arch variants ---
     pub fn gf_2vect_mad_sse(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_2vect_mad_avx(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_2vect_mad_avx2(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_3vect_mad arch variants ---
     pub fn gf_3vect_mad_sse(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_3vect_mad_avx(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_3vect_mad_avx2(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_4vect_mad arch variants ---
     pub fn gf_4vect_mad_sse(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_4vect_mad_avx(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_4vect_mad_avx2(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_5vect_mad arch variants ---
     pub fn gf_5vect_mad_sse(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_5vect_mad_avx(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_5vect_mad_avx2(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- gf_6vect_mad arch variants ---
     pub fn gf_6vect_mad_sse(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_6vect_mad_avx(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
     pub fn gf_6vect_mad_avx2(
-        len: c_int, vec: c_int, vec_i: c_int, gftbls: *mut c_uchar,
-        src: *mut c_uchar, dest: *mut *mut c_uchar,
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // --- AVX512 variants (ec_encode_data, gf_*vect_dot_prod, gf_*vect_mad) ---
+    pub fn ec_encode_data_avx512(
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut *mut c_uchar,
+        coding: *mut *mut c_uchar,
+    );
+    pub fn ec_encode_data_update_avx512(
+        len: c_int,
+        k: c_int,
+        rows: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        data: *mut c_uchar,
+        coding: *mut *mut c_uchar,
+    );
+
+    // gf_vect_dot_prod_avx512
+    pub fn gf_vect_dot_prod_avx512(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut c_uchar,
+    );
+
+    // gf_2vect_dot_prod_avx512
+    pub fn gf_2vect_dot_prod_avx512(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_3vect_dot_prod_avx512
+    pub fn gf_3vect_dot_prod_avx512(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_4vect_dot_prod_avx512
+    pub fn gf_4vect_dot_prod_avx512(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_5vect_dot_prod_avx512
+    pub fn gf_5vect_dot_prod_avx512(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_6vect_dot_prod_avx512
+    pub fn gf_6vect_dot_prod_avx512(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_vect_mad_avx512
+    pub fn gf_vect_mad_avx512(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut c_uchar,
+    );
+
+    // gf_2vect_mad_avx512
+    pub fn gf_2vect_mad_avx512(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_3vect_mad_avx512
+    pub fn gf_3vect_mad_avx512(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_4vect_mad_avx512
+    pub fn gf_4vect_mad_avx512(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_5vect_mad_avx512
+    pub fn gf_5vect_mad_avx512(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // gf_6vect_mad_avx512
+    pub fn gf_6vect_mad_avx512(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // --- GFNI variants (AVX2 with GFNI instruction set) ---
+    pub fn gf_vect_dot_prod_avx2_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut c_uchar,
+    );
+
+    pub fn gf_2vect_dot_prod_avx2_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_3vect_dot_prod_avx2_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_4vect_dot_prod_avx2_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_5vect_dot_prod_avx2_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_6vect_dot_prod_avx2_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_vect_mad_avx2_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut c_uchar,
+    );
+
+    pub fn gf_2vect_mad_avx2_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_3vect_mad_avx2_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_4vect_mad_avx2_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_5vect_mad_avx2_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_6vect_mad_avx2_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    // --- AVX512 + GFNI variants ---
+    pub fn gf_vect_dot_prod_avx512_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut c_uchar,
+    );
+
+    pub fn gf_2vect_dot_prod_avx512_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_3vect_dot_prod_avx512_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_4vect_dot_prod_avx512_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_5vect_dot_prod_avx512_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_6vect_dot_prod_avx512_gfni(
+        len: c_int,
+        vlen: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_vect_mad_avx512_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut c_uchar,
+    );
+
+    pub fn gf_2vect_mad_avx512_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_3vect_mad_avx512_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_4vect_mad_avx512_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_5vect_mad_avx512_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
+    );
+
+    pub fn gf_6vect_mad_avx512_gfni(
+        len: c_int,
+        vec: c_int,
+        vec_i: c_int,
+        gftbls: *mut c_uchar,
+        src: *mut c_uchar,
+        dest: *mut *mut c_uchar,
     );
 
     // --- RAID arch variants ---
@@ -776,7 +1290,10 @@ mod tests {
             for a in 1u8..=255 {
                 let inv = gf_inv(a);
                 let product = gf_mul(a, inv);
-                assert_eq!(product, 1, "gf_mul({a}, gf_inv({a})) = {product}, expected 1");
+                assert_eq!(
+                    product, 1,
+                    "gf_mul({a}, gf_inv({a})) = {product}, expected 1"
+                );
             }
         }
     }
